@@ -39,6 +39,8 @@ const ScrollableTabView = createReactClass({
     locked: PropTypes.bool,
     prerenderingSiblingsNumber: PropTypes.number,
     collapsableBar: PropTypes.node,
+    onEndReachedHandler: PropTypes.func,
+    tabHeight: PropTypes.number
   },
 
   getDefaultProps() {
@@ -149,16 +151,17 @@ const ScrollableTabView = createReactClass({
   renderScrollableContent() {
     const scenes = this._composeScenes();
     return <Animated.ScrollView
+      style={{maxHeight:this.props.tabHeight}}
       horizontal
       pagingEnabled
-      automaticallyAdjustContentInsets={false}
+      automaticallyAdjustContentInsets={true}
       contentOffset={{ x: this.props.initialPage * this.state.containerWidth, }}
       ref={(scrollView) => { this.scrollView = scrollView; }}
       onScroll={
         Animated.event([{
           nativeEvent: { contentOffset: { x: this.state.scrollX, }, },
         }, ], {
-          useNativeDriver: true,
+          useNativeDriver: true
         })
       }
       onMomentumScrollBegin={this._onMomentumScrollBeginAndEnd}
@@ -293,6 +296,14 @@ const ScrollableTabView = createReactClass({
 
     return <ContainerView style={[styles.container, this.props.style, ]}
       onLayout={this._handleLayout}
+      onScroll={event => {
+          var windowHeight = Dimensions.get("window").height,
+              height = event.nativeEvent.contentSize.height,
+              offset = event.nativeEvent.contentOffset.y;
+          if (windowHeight + offset >= height + 71) {
+              this.props.onEndReachedHandler();
+          }
+      }}
       ref={contentView => {this.contentView = contentView;}}
       onMomentumScrollEnd={event => {this.contentScrollDistance = event.nativeEvent.contentOffset.y;}}
       stickyHeaderIndices={this.props.collapsableBar ? [1, ] : []}>
